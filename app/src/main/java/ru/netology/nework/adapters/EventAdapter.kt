@@ -1,16 +1,11 @@
 package ru.netology.nework.adapters
 
 import android.content.res.Resources
-import android.media.MediaPlayer
-import android.net.Uri
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
-import ru.netology.nework.databinding.FragmentCardPostBinding
-import ru.netology.nework.dto.Post
 import android.view.View
-import android.widget.MediaController
 import android.widget.PopupMenu
 import android.widget.VideoView
 import androidx.core.view.isVisible
@@ -128,7 +123,8 @@ class EventViewHolder(
     private fun postListeners(event: EventResponse) {
         with(binding) {
             like.setOnClickListener {
-                like.isChecked = !like.isChecked //Инвертируем нажатие
+                like.isChecked = !like.isChecked
+                //Инвертация нажатия
                 onInteractionListener.onLike(event)
             }
             share.setOnClickListener {

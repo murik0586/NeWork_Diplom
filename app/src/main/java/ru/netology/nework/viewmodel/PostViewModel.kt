@@ -5,7 +5,12 @@ import android.media.MediaPlayer
 import android.net.Uri
 import androidx.core.net.toFile
 import androidx.core.net.toUri
-import androidx.lifecycle.*
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.asLiveData
+import androidx.lifecycle.switchMap
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -16,12 +21,15 @@ import kotlinx.coroutines.launch
 import ru.netology.nework.auth.AppAuth
 import ru.netology.nework.auxiliary.ConstantValues.emptyPost
 import ru.netology.nework.auxiliary.ConstantValues.noPhoto
-import ru.netology.nework.dto.*
 import ru.netology.nework.model.FeedModel
 import ru.netology.nework.model.FeedModelState
+import ru.netology.nework.repository.Repository
+import ru.netology.nework.auxiliary.SingleLiveEvent
+import ru.netology.nework.dto.Attachment
+import ru.netology.nework.dto.AttachmentType
+import ru.netology.nework.dto.MediaUpload
+import ru.netology.nework.dto.Post
 import ru.netology.nework.model.MediaModel
-import ru.netology.nework.repository.*
-import ru.netology.nework.util.SingleLiveEvent
 import java.io.File
 import javax.inject.Inject
 

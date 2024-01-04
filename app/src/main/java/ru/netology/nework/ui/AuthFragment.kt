@@ -1,5 +1,6 @@
 package ru.netology.nework.ui
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.net.Uri
 import android.os.Bundle
@@ -31,6 +32,8 @@ class AuthFragment : Fragment() {
 
     private var fragmentBinding: FragmentAuthBinding? = null
 
+    @SuppressLint("SetTextI18n")
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -61,6 +64,7 @@ class AuthFragment : Fragment() {
                             Snackbar.LENGTH_LONG
                         ).show()
                     }
+
                     Activity.RESULT_OK -> {
                         val uri: Uri? = it.data?.data
                         viewModel.changePhoto(uri, uri?.toFile())
@@ -97,10 +101,12 @@ class AuthFragment : Fragment() {
                 -1 -> {
                     binding.errorMessage.visibility = View.GONE
                 }
+
                 1 -> {
                     binding.errorMessage.visibility = View.VISIBLE
                     binding.errorMessage.setText(R.string.not_pass_enter)
                 }
+
                 else -> {
                     binding.errorMessage.visibility = View.VISIBLE
                     binding.errorMessage.text = getString(R.string.eror_code) + ": $it"
