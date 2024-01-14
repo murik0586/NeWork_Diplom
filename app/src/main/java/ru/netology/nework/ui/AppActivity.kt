@@ -42,7 +42,7 @@ class AppActivity : AppCompatActivity(R.layout.activity_app) {
             Toast.makeText(this@AppActivity, "Google Api Unavailable", Toast.LENGTH_LONG).show()
         }
     }
-
+    @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         if (currentFragment == "NewPostFragment") {
             findViewById<FloatingActionButton>(R.id.fab_cancel).callOnClick()

@@ -39,15 +39,20 @@ class RepositoryImpl @Inject constructor(
         .map(List<EventsEntity>::toDto)
         .flowOn(Dispatchers.Default)
 
+    override val dataJobs: Flow<List<Job>> = dao.getJobs()
+        .map(List<JobEntity>::toDto)
+        .flowOn(Dispatchers.Default)
+
+
     override fun getNewerCount(id: Long): Flow<Int> = flow {
         while (true) {
             delay(10_000L)
             val response = apiService.getNewer(id)
             if (!response.isSuccessful) {
-                throw ApiError(response.code(), response.message())
+                throw ApiError(response.message())
             }
 
-            val body = response.body() ?: throw ApiError(response.code(), response.message())
+            val body = response.body() ?: throw ApiError(response.message())
             dao.insert(body.toEntity(isNew = true))
             body.forEach {
                 newerPostsId.add(it.id)
@@ -66,10 +71,10 @@ class RepositoryImpl @Inject constructor(
             val response = apiService.getAll()
 
             if (!response.isSuccessful) {
-                throw ApiError(response.code(), response.message())
+                throw ApiError(response.message())
             }
 
-            val body = response.body() ?: throw ApiError(response.code(), response.message())
+            val body = response.body() ?: throw ApiError(response.message())
             dao.insert(body.toEntity())
         } catch (e: IOException) {
             throw NetworkError
@@ -83,7 +88,7 @@ class RepositoryImpl @Inject constructor(
             val response = apiService.removeById(id)
 
             if (!response.isSuccessful) {
-                throw ApiError(response.code(), response.message())
+                throw ApiError(response.message())
             }
             dao.removeById(id)
 
@@ -107,9 +112,10 @@ class RepositoryImpl @Inject constructor(
             val response = apiService.save(postRequest)
 
             if (!response.isSuccessful) {
-                throw ApiError(response.code(), response.message())
+                throw ApiError(response.message())
             }
-            val postResponse = response.body() ?: throw ApiError(response.code(), response.message())
+            val postResponse =
+                response.body() ?: throw ApiError(response.message())
             val postDaoSaved = Post(
                 id = postResponse.id,
                 authorId = postResponse.authorId,
@@ -130,14 +136,20 @@ class RepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun saveWithAttachment(post: Post, upload: MediaUpload, attachmentType: AttachmentType) {
+    override suspend fun saveWithAttachment(
+        post: Post,
+        upload: MediaUpload,
+        attachmentType: AttachmentType
+    ) {
         try {
             val media = upload(upload)
-            val postWithAttachment = post.copy(attachment =
-            Attachment(
-                url = media.url,
-                type = attachmentType,
-            ))
+            val postWithAttachment = post.copy(
+                attachment =
+                Attachment(
+                    url = media.url,
+                    type = attachmentType,
+                )
+            )
             saveAsync(postWithAttachment)
         } catch (e: AppError) {
             throw e
@@ -156,10 +168,10 @@ class RepositoryImpl @Inject constructor(
 
             val response = apiService.upload(media)
             if (!response.isSuccessful) {
-                throw ApiError(response.code(), response.message())
+                throw ApiError(response.message())
             }
 
-            return response.body() ?: throw ApiError(response.code(), response.message())
+            return response.body() ?: throw ApiError(response.message())
         } catch (e: IOException) {
             throw NetworkError
         } catch (e: Exception) {
@@ -172,10 +184,11 @@ class RepositoryImpl @Inject constructor(
             val response = apiService.getUsers()
 
             if (!response.isSuccessful) {
-                throw ApiError(response.code(), response.message())
+                throw ApiError(response.message())
             }
 
-            val userResponseList = response.body() ?: throw ApiError(response.code(), response.message())
+            val userResponseList =
+                response.body() ?: throw ApiError(response.message())
             val usersDaoSaved = userResponseList.map { userResponse ->
                 User(
                     id = userResponse.id,
@@ -197,9 +210,10 @@ class RepositoryImpl @Inject constructor(
             val response = apiService.getUserById(id)
 
             if (!response.isSuccessful) {
-                throw ApiError(response.code(), response.message())
+                throw ApiError(response.message())
             }
-            val userResponse = response.body() ?: throw ApiError(response.code(), response.message())
+            val userResponse =
+                response.body() ?: throw ApiError(response.message())
             val userDaoSaved = User(
                 id = userResponse.id,
                 login = userResponse.login,
@@ -219,10 +233,10 @@ class RepositoryImpl @Inject constructor(
             val response = apiService.getAllEvents()
 
             if (!response.isSuccessful) {
-                throw ApiError(response.code(), response.message())
+                throw ApiError(response.message())
             }
 
-            val body = response.body() ?: throw ApiError(response.code(), response.message())
+            val body = response.body() ?: throw ApiError(response.message())
             dao.insertEvents(body.toEntity())
         } catch (e: IOException) {
             throw NetworkError
@@ -246,9 +260,10 @@ class RepositoryImpl @Inject constructor(
             val response = apiService.saveEvents(eventRequest)
 
             if (!response.isSuccessful) {
-                throw ApiError(response.code(), response.message())
+                throw ApiError(response.message())
             }
-            val eventResponse = response.body() ?: throw ApiError(response.code(), response.message())
+            val eventResponse =
+                response.body() ?: throw ApiError(response.message())
             dao.saveEvent(EventsEntity.fromDto(eventResponse))
         } catch (e: IOException) {
             throw NetworkError
@@ -257,14 +272,20 @@ class RepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun saveEventsWithAttachment(event: EventResponse, upload: MediaUpload, attachmentType: AttachmentType) {
+    override suspend fun saveEventsWithAttachment(
+        event: EventResponse,
+        upload: MediaUpload,
+        attachmentType: AttachmentType
+    ) {
         try {
             val media = upload(upload)
-            val eventWithAttachment = event.copy(attachment =
-            Attachment(
-                url = media.url,
-                type = attachmentType,
-            ))
+            val eventWithAttachment = event.copy(
+                attachment =
+                Attachment(
+                    url = media.url,
+                    type = attachmentType,
+                )
+            )
             saveEvents(eventWithAttachment)
         } catch (e: AppError) {
             throw e
@@ -280,7 +301,7 @@ class RepositoryImpl @Inject constructor(
             val response = apiService.removeByIdEvent(id)
 
             if (!response.isSuccessful) {
-                throw ApiError(response.code(), response.message())
+                throw ApiError(response.message())
             }
             dao.removeByIdEvent(id)
 
@@ -300,9 +321,9 @@ class RepositoryImpl @Inject constructor(
                 apiService.likeByIdEvent(event.id)
             }
             if (!response.isSuccessful) {
-                throw ApiError(response.code(), response.message())
+                throw ApiError(response.message())
             }
-            val body = response.body() ?: throw ApiError(response.code(), response.message())
+            val body = response.body() ?: throw ApiError(response.message())
             dao.insertEvents(EventsEntity.fromDto(body))
         } catch (e: IOException) {
             throw NetworkError
@@ -320,10 +341,74 @@ class RepositoryImpl @Inject constructor(
                 apiService.joinByIdEvent(event.id)
             }
             if (!response.isSuccessful) {
-                throw ApiError(response.code(), response.message())
+                throw ApiError(response.message())
             }
-            val body = response.body() ?: throw ApiError(response.code(), response.message())
+            val body = response.body() ?: throw ApiError(response.message())
             dao.insertEvents(EventsEntity.fromDto(body))
+        } catch (e: IOException) {
+            throw NetworkError
+        } catch (e: Exception) {
+            throw UnknownError
+        }
+    }
+    override suspend fun getJobs(id: Long) {
+        try {
+            val response = apiService.getUserJobs(id)
+
+            if (!response.isSuccessful) {
+                throw ApiError(response.message())
+            }
+
+            val body = response.body() ?: throw ApiError(response.message())
+            dao.insertJobs(body.toEntity(id))
+        } catch (e: IOException) {
+            throw NetworkError
+        } catch (e: Exception) {
+            throw UnknownError
+        }
+    }
+
+    override suspend fun getMyJobs(id: Long) {
+        try {
+            val response = apiService.getMyJobs()
+
+            if (!response.isSuccessful) {
+                throw ApiError(response.message())
+            }
+
+            val body = response.body() ?: throw ApiError(response.message())
+            dao.insertJobs(body.toEntity(id))
+        } catch (e: IOException) {
+            throw NetworkError
+        } catch (e: Exception) {
+            throw UnknownError
+        }
+    }
+
+    override suspend fun saveJob(job: Job) {
+        try {
+            val response = apiService.saveJob(job)
+
+            if (!response.isSuccessful) {
+                throw ApiError(response.message())
+            }
+            val jobResponse = response.body() ?: throw ApiError(response.message())
+            dao.insertJob(JobEntity.fromDto(jobResponse))
+        } catch (e: IOException) {
+            throw NetworkError
+        } catch (e: Exception) {
+            throw UnknownError
+        }
+    }
+
+    override suspend fun removeJobById(id: Long) {
+        dao.removeByIdJob(id)
+        try {
+            val response = apiService.removeJobById(id)
+            if (!response.isSuccessful) {
+                throw ApiError(response.message())
+            }
+            dao.removeByIdJob(id)
         } catch (e: IOException) {
             throw NetworkError
         } catch (e: Exception) {
@@ -341,9 +426,9 @@ class RepositoryImpl @Inject constructor(
 
             }
             if (!response.isSuccessful) {
-                throw ApiError(response.code(), response.message())
+                throw ApiError(response.message())
             }
-            val body = response.body() ?: throw ApiError(response.code(), response.message())
+            val body = response.body() ?: throw ApiError(response.message())
             dao.insert(PostEntity.fromDto(body))
         } catch (e: IOException) {
             throw NetworkError

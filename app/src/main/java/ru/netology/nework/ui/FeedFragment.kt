@@ -1,11 +1,14 @@
 package ru.netology.nework.ui
 
 import android.app.AlertDialog
+import android.media.MediaPlayer
+import ru.netology.nework.auxiliary.Companion.Companion.userId
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.*
 import android.widget.MediaController
+import ru.netology.nework.viewmodel.UsersViewModel
 import android.widget.Toast
 import android.widget.VideoView
 import androidx.core.view.MenuProvider
@@ -41,11 +44,24 @@ class FeedFragment : Fragment() {
 
     val authViewModel: AuthViewModel by viewModels()
 
+    private val usersViewModel: UsersViewModel by activityViewModels()
+
     @Inject
     lateinit var appAuth: AppAuth
 
+    private val mediaPlayer = MediaPlayer()
 
     private val interactionListener = object : OnInteractionListener {
+
+        override fun onTapAvatar(post: Post) {
+            findNavController().navigate(
+                R.id.action_feedFragment_to_profileFragment,
+                Bundle().apply {
+                    userId = post.authorId
+                }
+            )
+        }
+
 
         override fun onLike(post: Post) {
             if (authViewModel.authenticated) {
@@ -120,7 +136,8 @@ class FeedFragment : Fragment() {
 
                         if (videoView.layoutParams?.width != null) {
                             videoView.layoutParams?.width = resources.displayMetrics.widthPixels
-                            videoView.layoutParams?.height = (videoView.layoutParams?.width!! * 0.5625).toInt()
+                            videoView.layoutParams?.height =
+                                (videoView.layoutParams?.width!! * 0.5625).toInt()
                         }
                         stopPlayback()
 
@@ -129,21 +146,26 @@ class FeedFragment : Fragment() {
                 }
             }
             if (post.attachment?.type == AttachmentType.AUDIO) {
-                viewModel.mediaPlayer.reset()
-                if (viewModel.mediaPlayer.isPlaying) {
-                    viewModel.mediaPlayer.stop()
+                if (mediaPlayer.isPlaying) {
+                    mediaPlayer.pause()
                 } else {
-                    viewModel.mediaPlayer.setDataSource(post.attachment.url)
-                    viewModel.mediaPlayer.prepare()
-                    viewModel.mediaPlayer.start()
+                    mediaPlayer.reset()
+                    mediaPlayer.setDataSource(post.attachment.url)
+                    mediaPlayer.prepare()
+                    mediaPlayer.start()
+
                 }
             }
         }
 
-        override fun onLink(post: Post) {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(post.link))
-            startActivity(intent)
-        }
+            override fun onLink(post: Post) {
+                val intent = if (post.link?.contains("https://") == true || post.link?.contains("http://") == true) {
+                    Intent(Intent.ACTION_VIEW, Uri.parse(post.link))
+                } else {
+                    Intent(Intent.ACTION_VIEW, Uri.parse("http://${post.link}"))
+                }
+                startActivity(intent)
+            }
 
         override fun onPreviewAttachment(post: Post) {
             findNavController().navigate(
@@ -167,6 +189,9 @@ class FeedFragment : Fragment() {
         adapter = PostAdapter(interactionListener)
 
         binding.list.adapter = adapter
+
+        usersViewModel.dataUsersList
+
 
         viewModel.data.observe(viewLifecycleOwner) {
             adapter.submitList(it.posts)
@@ -239,7 +264,7 @@ class FeedFragment : Fragment() {
                 menuProvider = this
             }, viewLifecycleOwner)
         }
-        binding.mainNavView.setOnItemSelectedListener{ menuItem ->
+        binding.mainNavView.setOnItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.navigation_posts -> {
                     true
@@ -253,7 +278,7 @@ class FeedFragment : Fragment() {
                     true
                 }
                 R.id.navigation_profile -> {
-                    //findNavController().navigate(action_feedFragment_to_)  //TODO
+                    findNavController().navigate(R.id.action_feedFragment_to_profileFragment)
                     true
                 }
                 else -> false
@@ -312,6 +337,10 @@ class FeedFragment : Fragment() {
         }
 
         return binding.root
+    }
+    override fun onDestroyView() {
+        mediaPlayer.release()
+        super.onDestroyView()
     }
 
     override fun onResume() {

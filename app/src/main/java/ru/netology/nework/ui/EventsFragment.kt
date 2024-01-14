@@ -2,7 +2,9 @@ package ru.netology.nework.ui
 
 import android.app.AlertDialog
 import android.content.Intent
+import android.media.MediaPlayer
 import android.net.Uri
+import ru.netology.nework.auxiliary.Companion.Companion.userId
 import android.os.Bundle
 import android.view.*
 import android.widget.MediaController
@@ -40,8 +42,18 @@ class EventsFragment : Fragment() {
     @Inject
     lateinit var appAuth: AppAuth
 
+    val mediaPlayer = MediaPlayer()
 
     private val interactionListener = object : OnInteractionListenerEvent {
+
+        override fun onTapAvatar(event: EventResponse) {
+            findNavController().navigate(
+                R.id.action_eventsFragment_to_profileFragment,
+                Bundle().apply {
+                    userId = event.authorId
+                }
+            )
+        }
 
         override fun onLike(event: EventResponse) {
             if (authViewModel.authenticated) {
@@ -119,19 +131,24 @@ class EventsFragment : Fragment() {
                 }
             }
             if (event.attachment?.type == AttachmentType.AUDIO) {
-                viewModel.mediaPlayer.reset()
-                if (viewModel.mediaPlayer.isPlaying) {
-                    viewModel.mediaPlayer.stop()
+                if (mediaPlayer.isPlaying) {
+                    mediaPlayer.stop()
                 } else {
-                    viewModel.mediaPlayer.setDataSource(event.attachment.url)
-                    viewModel.mediaPlayer.prepare()
-                    viewModel.mediaPlayer.start()
+                    mediaPlayer.reset()
+                    mediaPlayer.setDataSource(event.attachment.url)
+                    mediaPlayer.prepare()
+                    mediaPlayer.start()
                 }
             }
         }
 
         override fun onLink(event: EventResponse) {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(event.link))
+            val intent =
+                if (event.link?.contains("https://") == true || event.link?.contains("http://") == true) {
+                    Intent(Intent.ACTION_VIEW, Uri.parse(event.link))
+                } else {
+                    Intent(Intent.ACTION_VIEW, Uri.parse("http://${event.link}"))
+                }
             startActivity(intent)
         }
 
@@ -225,6 +242,7 @@ class EventsFragment : Fragment() {
                             )
                             true
                         }
+
                         R.id.signup -> {
                             findNavController().navigate(
                                 R.id.action_feedFragment_to_authFragment,
@@ -234,6 +252,7 @@ class EventsFragment : Fragment() {
                             )
                             true
                         }
+
                         R.id.signout -> {
                             AlertDialog.Builder(requireActivity())
                                 .setTitle(R.string.are_you_suare)
@@ -246,6 +265,7 @@ class EventsFragment : Fragment() {
                                 .show()
                             true
                         }
+
                         else -> false
                     }
                 }
@@ -259,19 +279,21 @@ class EventsFragment : Fragment() {
                     findNavController().navigate(R.id.action_eventsFragment_to_feedFragment)
                     true
                 }
+
                 R.id.navigation_events -> {
                     true
                 }
+
                 R.id.navigation_users -> {
-                    findNavController().navigate(R.id.action_eventsFragment_to_feedFragment)
-                    findNavController().navigate(R.id.action_feedFragment_to_usersFragment)
+                    findNavController().navigate(R.id.action_eventsFragment_to_usersFragment)
                     true
                 }
+
                 R.id.navigation_profile -> {
-                    findNavController().navigate(R.id.action_eventsFragment_to_feedFragment)
-                    //findNavController().navigate(action_feedFragment_to_)  //TODO
+                    findNavController().navigate(R.id.action_eventsFragment_to_profileFragment)
                     true
                 }
+
                 else -> false
             }
         }
@@ -310,6 +332,11 @@ class EventsFragment : Fragment() {
         }
 
         return binding.root
+    }
+
+    override fun onDestroyView() {
+        mediaPlayer.release()
+        super.onDestroyView()
     }
 
     override fun onResume() {
